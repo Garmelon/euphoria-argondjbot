@@ -1,0 +1,6 @@
+[general]
+nick = ArgonDJBot
+cookiefile = argondjbot.cookie
+apikey = <our api key here>
+room = test
+# password = password
