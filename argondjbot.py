@@ -3,6 +3,7 @@ import configparser
 import datetime
 import isodate
 import logging
+import random
 import re
 import time
 
@@ -67,7 +68,7 @@ class Playlist:
 		return f"{hours:02}:{minutes:02}:{seconds:02}"
 
 	@staticmethod
-	def format_queue_list_entry(video, position, played_in):
+	def format_list_entry(video, position, played_in):
 		played_in = Playlist.format_duration(played_in)
 		return f"[{position:2}] {video.title!r} will be played in [{played_in}]"
 
@@ -88,9 +89,15 @@ class Playlist:
 			self.playing_task = asyncio.ensure_future(self._play(room))
 			#asyncio.ensure_future(self._play(room))
 
+	def skip(self, room):
+		if self.playing_task and not self.playing_task.done():
+			self.playing_task.cancel()
+			self.playing_task = None
+		self.play(room)
+
 	async def _play(self, room):
 		while self.waiting:
-			video, player = self.waiting.pop()
+			video, player = self.waiting.pop(0)
 			duration = video.duration.total_seconds()
 
 			self.playing_video = video
@@ -107,12 +114,20 @@ class Playlist:
 
 	# commands modifying the playlist
 
-	def queue(self, video, player):
-		position = len(self.waiting)
-		self.waiting.append((video, player))
+	def insert(self, video, player, before=None):
+		element = (video, player)
+		if before is None:
+			position = len(self.waiting)
+			self.waiting.append(element)
+		else:
+			self.waiting.insert(before, element)
+			position = before
 		return position
 
 	# playlist info
+
+	def empty(self):
+		return not bool(self.waiting)
 
 	def items(self):
 		return enumerate(self.waiting)
@@ -130,7 +145,7 @@ class Playlist:
 		else:
 			videos = self.waiting[:position]
 
-		video_sum = sum((video.duration for video in videos), datetime.timedelta())
+		video_sum = sum((video.duration for video, _ in videos), datetime.timedelta())
 		return self.playtime_left() + video_sum
 
 class ArgonDJBot(yaboli.Bot):
@@ -142,15 +157,16 @@ class ArgonDJBot(yaboli.Bot):
 	YOUTUBE_RE = r"((https?://)?(www\.)?(youtube\.com/(watch\?v=|embed/)|youtu\.be/))?(" + VIDEO_ID_RE + ")"
 	YOUTUBE_RE_GROUP = 6
 
+	SKIP_VIDEOS = [
+		"-6BlMb7IFFY", # Plop: Plunger to bald head
+		"fClj2S6UzQA", # Ploop: Finger in metal cylinder
+	]
+
 	def __init__(self, nick, room, api_key, cookiefile=None, password=None):
 		super().__init__(nick, cookiefile=cookiefile)
 
 		self.yt = YouTube(api_key)
 		self.playlist = Playlist()
-
-		#self.playing_task = None
-		#self.playing_video = None
-		#self.playing_until = None
 
 		self.join_room(room, password=password)
 
@@ -166,6 +182,8 @@ class ArgonDJBot(yaboli.Bot):
 		if not argstr:
 			await self.botrulez_ping(room, message, command)
 			await self.botrulez_help(room, message, command, text=self.SHORT_HELP)
+
+			await self.command_skip(room, message, command)
 
 		await self.command_queue(room, message, command, argstr)
 
@@ -191,16 +209,27 @@ class ArgonDJBot(yaboli.Bot):
 		for vid in video_ids:
 			video = videos.get(vid)
 			if video:
-				position = self.playlist.queue(video, message.sender.nick)
+				position = self.playlist.insert(video, message.sender.nick)
 				until = self.playlist.playtime_until(position)
 
-				info = Playlist.format_queue_list_entry(video, position, until)
+				info = Playlist.format_list_entry(video, position, until)
 				lines.append(info)
 
 		text = "\n".join(lines)
 		await room.send(text, message.mid)
 
 		self.playlist.play(room)
+
+	@yaboli.command("skip", "s")
+	async def command_skip(self, room, message):
+		if self.playlist.empty():
+			vid = random.choice(self.SKIP_VIDEOS)
+			videos = await self.yt.get_videos([vid])
+			video = videos.get(vid)
+			self.playlist.insert(video, room.session.nick, before=0)
+
+		await room.send("Skipping to next video", message.mid)
+		self.playlist.skip(room)
 
 	@yaboli.command("list", "l")
 	async def command_list(self, room, message, argstr):
