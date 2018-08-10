@@ -160,6 +160,56 @@ class ArgonDJBot(yaboli.Bot):
 	SKIP_VIDEOS = [
 		"-6BlMb7IFFY", # Plop: Plunger to bald head
 		"fClj2S6UzQA", # Ploop: Finger in metal cylinder
+		"OfkViWKucCU", # Sold pupper dance
+		"vGyHXW0lwZY", # Dog takes flight (maybe a bit loud?)
+		"B6zk2Yd5ukc", # How to summon a cat on christmas
+		"UJgwPRqVOoo", # Gecko party
+		"7eysE77niUU", # I wanna be like you
+		"ZH0lMFQifa4", # That's just neat
+		"gdyp4Ez_T6I", # Wii soccer balls
+		"CWGOt-Sic2s", # Running duck
+		"6gxgfYKMUqE", # What happened
+		"oa0arvrLZaM", # Dancing fish
+		"Z7ioqD4ugh8", # parakeet
+		"l1heD4T8Yco", # Dancing hamster
+		"bLWGIYYEKfg", # urrg
+		"4o5baMYWdtQ", # arf
+		"y4aLXw7WwDM", # Muahahahaha
+		"Ad9kJKCQ_kU", # Doggo's got talent
+		"YxmdmJtUpjU", # Duck eating peas really fast
+		"Ab_BdFr1BGg", # heard you were talkin shit (fat squirrel)
+		"EixPRMs2jbY", # The microwave at work
+		"9sxgbpTeiWQ", # Hedgehog
+		"uqyHPs9D0z0", # Cat meaaaaaaaaaaaaaaaaaow
+		"ua4nDQ-IGbY", # Cat vs. printing paper
+		#"rMMOQOLze4Y", # Polite rally driver
+		"UBftA7V4xak", # Dog dancing to "Shake that ass for me"
+		"F-X4SLhorvw", # Look at all those
+		"qcdkbcjTBoE", # Seal yells
+		"-w-58hQ9dLk", # Jurassic park (melodica cover)
+		"rYfkmDoOnmM", # Dog says mama
+		"P1iqLU2KWJk", # Have you ever had a dream
+		"bQtmm_lpUKI", # World's most pathetic elevator chime
+		"lGVoZuMbTI4", # Xenostapler
+		"2p1DIiv5GWs", # A drum beatin'
+		"aHAgeOx1cBM", # Kill bill blow dryer
+		"UkakfkiydPw", # Bem bebebem bebem bebem bem bem
+		"t1r6BmNJX6Y", # Dog treat scream
+		"sMKoNBRZM1M", # Super mario ping pong
+		"DSi_FzQBNrU", # Markiplier do something spooky
+		"KkDI4l2EldI", # SNAIL
+		"NCu2saTv3QA", # Cat plays with foot
+		"XOCuBpXi4zI", # Walking frog
+		"Ul7IE3CTmSs", # annoyed news presenter
+		"VV5JOQyUYNg", # Drum fill
+		"PsLm6_qHeag", # Best dog in the world
+		#"_7jvYfIDbyU", # Not a rapper, an adapter
+		"Vh8l0x9uF-Y", # Man sneezes into trombone
+		"rkZ9sSgGPrs", # Ghostly mouse howl
+		"Fl2pSbNvp_Q", # One hell of a yawn
+		"LlFmBB8wzg0", # It's soup
+		"ne-gcy--MeY", # Crow on webcam
+		"1s04tEDJVjY", # Smooth criminal cat
 	]
 
 	def __init__(self, nick, room, api_key, cookiefile=None, password=None):
