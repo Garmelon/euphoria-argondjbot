@@ -17,12 +17,13 @@ class Video:
 	DURATION_RE = r"P(\d+Y)?(\d+"
 	DELAY = 2
 
-	def __init__(self, vid, title, duration, blocked):
+	def __init__(self, vid, title, duration, blocked, allowed):
 		self.id = vid
 		self.title = title
 		self.raw_duration = isodate.parse_duration(duration)
 		self.duration = self.raw_duration + datetime.timedelta(seconds=self.DELAY)
-		self.blocked = blocked
+		self.blocked = list(sorted(blocked)) if blocked is not None else None
+		self.allowed = list(sorted(allowed)) if allowed is not None else None
 
 class YouTube:
 	def __init__(self, api_key):
@@ -38,9 +39,10 @@ class YouTube:
 			vid = info["id"]
 			title = info["snippet"]["title"]
 			duration = info["contentDetails"]["duration"]
-			blocked = None
+			blocked = info["contentDetails"].get("regionRestriction", {}).get("blocked", None)
+			allowed = info["contentDetails"].get("regionRestriction", {}).get("allowed", None)
 
-			video = Video(vid, title, duration, blocked)
+			video = Video(vid, title, duration, blocked, allowed)
 			videos[vid] = video
 
 		return videos
@@ -70,7 +72,14 @@ class Playlist:
 	@staticmethod
 	def format_list_entry(video, position, played_in):
 		played_in = Playlist.format_duration(played_in)
-		return f"[{position:2}] {video.title!r} will be played in [{played_in}]"
+		lines = [f"[{position:2}] {video.title!r} will be played in [{played_in}]"]
+
+		if video.blocked is not None:
+			lines.append(f"Blocked in {', '.join(video.blocked)}.")
+		if video.allowed is not None:
+			lines.append(f"Only viewable in {', '.join(video.allowed)}.")
+
+		return lines
 
 	@staticmethod
 	def format_play(video, player):
@@ -155,9 +164,9 @@ class ArgonDJBot(yaboli.Bot):
 		"!skip, !s - skip the currently playing video\n"
 		"\n"
 		"Advanced queue manipulation:\n"
-		"NYI !list, !l - display a list of currently queued videos\n"
+		"!list, !l - display a list of currently queued videos\n"
 		"NYI !delete, !del, !d <index> - deletes video at that index in the queue\n"
-		"NYI !insert, !ins, !i <url or id> [before|after] <index> - insert a video into the queue\n"
+		"NYI !insert, !ins, !i <url or id> [before|after] <index> - insert a single video into the queue\n"
 		"\n"
 		"Fun stuff:\n"
 		"!dramaticskip, !dskip, !ds - dramatic version of !skip\n"
@@ -258,6 +267,8 @@ class ArgonDJBot(yaboli.Bot):
 			await self.command_vskip(room, message, command)
 			await self.command_dskip(room, message, command)
 
+			await self.command_list(room, message, command)
+
 		await self.command_queue(room, message, command, argstr)
 
 	@yaboli.command("queue", "q")
@@ -286,7 +297,7 @@ class ArgonDJBot(yaboli.Bot):
 				until = self.playlist.playtime_until(position)
 
 				info = Playlist.format_list_entry(video, position, until)
-				lines.append(info)
+				lines.extend(info)
 
 		text = "\n".join(lines)
 		await room.send(text, message.mid)
@@ -325,8 +336,19 @@ class ArgonDJBot(yaboli.Bot):
 		self.playlist.skip(room)
 
 	@yaboli.command("list", "l")
-	async def command_list(self, room, message, argstr):
-		pass
+	async def command_list(self, room, message):
+		lines = []
+		for position, (video, _) in self.playlist.items():
+			until = self.playlist.playtime_until(position)
+			info = Playlist.format_list_entry(video, position, until)
+			lines.extend(info)
+
+		if lines:
+			text = "\n".join(lines)
+		else:
+			text = "Queue is empty"
+
+		await room.send(text, message.mid)
 
 def main(configfile):
 	#asyncio.get_event_loop().set_debug(True)
