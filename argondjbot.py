@@ -128,10 +128,21 @@ class Playlist:
 		if before is None:
 			position = len(self.waiting)
 			self.waiting.append(element)
-		else:
+			return position
+		elif position >= 0:
 			self.waiting.insert(before, element)
-			position = before
-		return position
+			return before
+		else:
+			return None
+
+	def delete(self, position):
+		if position < 0:
+			return None
+
+		try:
+			return self.waiting.pop(position)
+		except IndexError:
+			return None
 
 	# playlist info
 
@@ -176,10 +187,12 @@ class ArgonDJBot(yaboli.Bot):
 	SHORT_HELP = "Short help placeholder"
 	LONG_HELP = COMMANDS
 
+	# Find the video id in a single argument
 	VIDEO_ID_RE = r"[a-zA-Z0-9_-]{11}"
-	# group 5: video id
 	YOUTUBE_RE = r"((https?://)?(www\.)?(youtube\.com/(watch\?v=|embed/)|youtu\.be/))?(" + VIDEO_ID_RE + ")"
 	YOUTUBE_RE_GROUP = 6
+
+	DEL_RE = r"(\d+)" # Per argument
 
 	SKIP_VIDEOS = [
 		"-6BlMb7IFFY", # Plop: Plunger to bald head
@@ -272,6 +285,7 @@ class ArgonDJBot(yaboli.Bot):
 			await self.command_list(room, message, command)
 
 		await self.command_queue(room, message, command, argstr)
+		await self.command_delete(room, message, command, argstr)
 
 	@yaboli.command("queue", "q")
 	async def command_queue(self, room, message, argstr):
@@ -302,7 +316,7 @@ class ArgonDJBot(yaboli.Bot):
 
 		text = "\n".join(lines + lines_parse_error + lines_api_error)
 		if not lines:
-			await room.send("No valid videos specified\n" + text, message.mid)
+			await room.send("ERROR: No valid videos specified\n" + text, message.mid)
 			return
 
 		await room.send(text, message.mid)
@@ -352,6 +366,36 @@ class ArgonDJBot(yaboli.Bot):
 		else:
 			text = "Queue is empty"
 
+		await room.send(text, message.mid)
+
+	@yaboli.command("delete", "del", "d")
+	async def command_delete(self, room, message, argstr):
+		indices = []
+		lines_parse_error = []
+		args = self.parse_args(argstr)
+		for arg in args:
+			match = re.fullmatch(self.DEL_RE, arg)
+			if match:
+				indices.append(int(match.group(1)))
+			else:
+				lines_parse_error.append(f"Could not parse {arg!r}")
+
+		if not indices:
+			text = "\n".join(["ERROR: No valid indices given"] + lines_parse_error)
+			await room.send(text, message.mid)
+			return
+
+		lines = []
+		lines_remove_error = []
+		for i in reversed(sorted(set(indices))):
+			success = self.playlist.delete(i)
+			if success:
+				video, _ = success
+				lines.append(f"Removed {video.title!r}")
+			else:
+				lines_remove_error.append(f"No video at index {i}")
+
+		text = "\n".join(lines + lines_parse_error + lines_remove_error)
 		await room.send(text, message.mid)
 
 def main(configfile):
