@@ -91,6 +91,14 @@ class Playlist:
 		]
 		return "\n".join(lines)
 
+	@staticmethod
+	def format_next(video, player):
+		if video and player:
+			player = mention(player, ping=False)
+			return f"Next: {video.title!r} from {player}"
+		else:
+			return "Next: Nothing"
+
 	# commands regarding currently playing video
 
 	def play(self, room):
@@ -112,8 +120,13 @@ class Playlist:
 			self.playing_video = video
 			self.playing_until = time.time() + duration
 
-			message = self.format_play(video, player)
-			await room.send(message)
+			text = self.format_play(video, player)
+			msg = await room.send(text)
+
+			next_video = self.next()
+			video, player = next_video if next_video else (None, None)
+			text = self.format_next(video, player)
+			await room.send(text, msg.mid)
 
 			await asyncio.sleep(duration)
 
@@ -151,6 +164,9 @@ class Playlist:
 
 	def items(self):
 		return enumerate(self.waiting)
+
+	def next(self):
+		return self.waiting[0] if self.waiting else None
 
 	def playtime_left(self):
 		if self.playing_until:
