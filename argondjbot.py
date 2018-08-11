@@ -149,8 +149,23 @@ class Playlist:
 		return self.playtime_left() + video_sum
 
 class ArgonDJBot(yaboli.Bot):
+	COMMANDS = (
+		"Simply playing videos:\n"
+		"!queue, !q <urls or ids> - add videos to the queue\n"
+		"!skip, !s - skip the currently playing video\n"
+		"\n"
+		"Advanced queue manipulation:\n"
+		"NYI !list, !l - display a list of currently queued videos\n"
+		"NYI !delete, !del, !d <index> - deletes video at that index in the queue\n"
+		"NYI !insert, !ins, !i <url or id> [before|after] <index> - insert a video into the queue\n"
+		"\n"
+		"Fun stuff:\n"
+		"!dramaticskip, !dskip, !ds - dramatic version of !skip\n"
+		"!videoskip, !vskip, !vs - play a short video before the next queued video starts\n"
+	)
+
 	SHORT_HELP = "Short help placeholder"
-	LONG_HELP = "Long help placeholder"
+	LONG_HELP = COMMANDS
 
 	VIDEO_ID_RE = r"[a-zA-Z0-9_-]{11}"
 	# group 5: video id
@@ -211,6 +226,12 @@ class ArgonDJBot(yaboli.Bot):
 		"ne-gcy--MeY", # Crow on webcam
 		"1s04tEDJVjY", # Smooth criminal cat
 	]
+	DRAMATICSKIP_VIDEOS = [
+		"VHkP88fx164", # animated video
+		"0pTOXwYtSVk", # longer video
+		"eVLOVpwXYGY", # dramatic chipmunk remix
+		"IqTerZkJaCU", # dramatic chipmunk vs shocked squirrel
+	] + ["y8Kyi0WNg40"]*100 # original video
 
 	def __init__(self, nick, room, api_key, cookiefile=None, password=None):
 		super().__init__(nick, cookiefile=cookiefile)
@@ -234,6 +255,8 @@ class ArgonDJBot(yaboli.Bot):
 			await self.botrulez_help(room, message, command, text=self.SHORT_HELP)
 
 			await self.command_skip(room, message, command)
+			await self.command_vskip(room, message, command)
+			await self.command_dskip(room, message, command)
 
 		await self.command_queue(room, message, command, argstr)
 
@@ -277,6 +300,26 @@ class ArgonDJBot(yaboli.Bot):
 			videos = await self.yt.get_videos([vid])
 			video = videos.get(vid)
 			self.playlist.insert(video, room.session.nick, before=0)
+
+		await room.send("Skipping to next video", message.mid)
+		self.playlist.skip(room)
+
+	@yaboli.command("videoskip", "vskip", "vs")
+	async def command_vskip(self, room, message):
+		vid = random.choice(self.SKIP_VIDEOS)
+		videos = await self.yt.get_videos([vid])
+		video = videos.get(vid)
+		self.playlist.insert(video, room.session.nick, before=0)
+
+		await room.send("Skipping to next video", message.mid)
+		self.playlist.skip(room)
+
+	@yaboli.command("dramaticskip", "dskip", "ds")
+	async def command_dskip(self, room, message):
+		vid = random.choice(self.DRAMATICSKIP_VIDEOS)
+		videos = await self.yt.get_videos([vid])
+		video = videos.get(vid)
+		self.playlist.insert(video, room.session.nick, before=0)
 
 		await room.send("Skipping to next video", message.mid)
 		self.playlist.skip(room)
