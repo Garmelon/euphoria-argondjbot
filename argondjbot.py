@@ -240,6 +240,8 @@ class ArgonDJBot(yaboli.Bot):
 		"0pTOXwYtSVk", # longer video
 		"eVLOVpwXYGY", # dramatic chipmunk remix
 		"IqTerZkJaCU", # dramatic chipmunk vs shocked squirrel
+		"G4BuQ_0oU0I", # 8-bit chipmunk
+		"Wt0GiBkyCC0", # dramatic cat
 	] + ["y8Kyi0WNg40"]*100 # original video
 
 	def __init__(self, nick, room, api_key, cookiefile=None, password=None):
