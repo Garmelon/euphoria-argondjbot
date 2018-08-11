@@ -192,7 +192,7 @@ class ArgonDJBot(yaboli.Bot):
 		"\n"
 		"Advanced queue manipulation:\n"
 		"!list, !l - display a list of currently queued videos\n"
-		"NYI !delete, !del, !d <index> - deletes video at that index in the queue\n"
+		"!delete, !del, !d <index> - deletes video at that index in the queue\n"
 		"NYI !insert, !ins, !i <url or id> [before|after] <index> - insert a single video into the queue\n"
 		"\n"
 		"Fun stuff:\n"
