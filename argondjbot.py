@@ -275,22 +275,19 @@ class ArgonDJBot(yaboli.Bot):
 
 	@yaboli.command("queue", "q")
 	async def command_queue(self, room, message, argstr):
-		lines = []
 		video_ids = []
-
+		lines_parse_error = []
 		args = self.parse_args(argstr)
-		if not args:
-			await room.send("No videos specified", message.mid)
-			return
-
 		for arg in args:
 			if arg == "-id": continue
 			match = re.match(self.YOUTUBE_RE, arg)
 			if match:
 				video_ids.append(match.group(self.YOUTUBE_RE_GROUP))
 			else:
-				lines.append(f"Could not parse {arg!r}")
+				lines_parse_error.append(f"Could not parse {arg!r}")
 
+		lines = []
+		lines_api_error = []
 		videos = await self.yt.get_videos(video_ids)
 		for vid in video_ids:
 			video = videos.get(vid)
@@ -300,10 +297,15 @@ class ArgonDJBot(yaboli.Bot):
 
 				info = Playlist.format_list_entry(video, position, until)
 				lines.extend(info)
+			else:
+				lines_api_error.append(f"Video with id {vid} could not be accessed via the API")
 
-		text = "\n".join(lines)
+		text = "\n".join(lines + lines_parse_error + lines_api_error)
+		if not lines:
+			await room.send("No valid videos specified\n" + text, message.mid)
+			return
+
 		await room.send(text, message.mid)
-
 		self.playlist.play(room)
 
 	@yaboli.command("skip", "s")
