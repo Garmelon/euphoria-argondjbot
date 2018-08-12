@@ -15,7 +15,7 @@ from yaboli.utils import *
 
 class Video:
 	DURATION_RE = r"P(\d+Y)?(\d+"
-	DELAY = 2
+	DELAY = 4
 
 	def __init__(self, vid, title, duration, blocked, allowed):
 		self.id = vid
