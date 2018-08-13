@@ -193,7 +193,7 @@ class ArgonDJBot(yaboli.Bot):
 		"Advanced queue manipulation:\n"
 		"!list, !l - display a list of currently queued videos\n"
 		"!delete, !del, !d <index> - deletes video at that index in the queue\n"
-		"NYI !insert, !ins, !i <url or id> [before|after] <index> - insert a single video into the queue\n"
+		"!insert, !ins, !i before|after <index> <urls or ids> - insert videos in the queue\n"
 		"\n"
 		"Fun stuff:\n"
 		"!dramaticskip, !dskip, !ds - dramatic version of !skip\n"
@@ -209,6 +209,7 @@ class ArgonDJBot(yaboli.Bot):
 	YOUTUBE_RE_GROUP = 6
 
 	DEL_RE = r"(\d+)" # Per argument
+	INS_RE = r"(before|after)\s+(\d+)\s+(.*)" # On the whole argstr
 
 	SKIP_VIDEOS = [
 		"-6BlMb7IFFY", # Plop: Plunger to bald head
@@ -302,39 +303,50 @@ class ArgonDJBot(yaboli.Bot):
 
 		await self.command_queue(room, message, command, argstr)
 		await self.command_delete(room, message, command, argstr)
+		await self.command_insert(room, message, command, argstr)
 
-	@yaboli.command("queue", "q")
-	async def command_queue(self, room, message, argstr):
+	async def find_videos(self, args):
 		video_ids = []
 		lines_parse_error = []
-		args = self.parse_args(argstr)
 		for arg in args:
 			if arg == "-id": continue
-			match = re.match(self.YOUTUBE_RE, arg)
+			match = re.fullmatch(self.YOUTUBE_RE, arg)
 			if match:
 				video_ids.append(match.group(self.YOUTUBE_RE_GROUP))
 			else:
 				lines_parse_error.append(f"Could not parse {arg!r}")
 
-		lines = []
+		videos = []
 		lines_api_error = []
-		videos = await self.yt.get_videos(video_ids)
+		video_lookup = await self.yt.get_videos(video_ids)
 		for vid in video_ids:
-			video = videos.get(vid)
+			video = video_lookup.get(vid)
 			if video:
-				position = self.playlist.insert(video, message.sender.nick)
-				until = self.playlist.playtime_until(position)
-
-				info = Playlist.format_list_entry(video, position, until)
-				lines.extend(info)
+				videos.append(video)
 			else:
 				lines_api_error.append(f"Video with id {vid} could not be accessed via the API")
 
-		text = "\n".join(lines + lines_parse_error + lines_api_error)
-		if not lines:
+		return videos, lines_parse_error, lines_api_error
+
+	@yaboli.command("queue", "q")
+	async def command_queue(self, room, message, argstr):
+		args = self.parse_args(argstr)
+		videos, lines_parse_error, lines_api_error = await self.find_videos(args)
+
+		if not videos:
+			text = "\n".join(lines_parse_error + lines_api_error)
 			await room.send("ERROR: No valid videos specified\n" + text, message.mid)
 			return
 
+		lines = []
+		for video in videos:
+			position = self.playlist.insert(video, message.sender.nick)
+			until = self.playlist.playtime_until(position)
+
+			info = Playlist.format_list_entry(video, position, until)
+			lines.extend(info)
+
+		text = "\n".join(lines + lines_parse_error + lines_api_error)
 		await room.send(text, message.mid)
 		self.playlist.play(room)
 
@@ -413,6 +425,41 @@ class ArgonDJBot(yaboli.Bot):
 
 		text = "\n".join(lines + lines_parse_error + lines_remove_error)
 		await room.send(text, message.mid)
+
+	@yaboli.command("insert", "ins", "i")
+	async def command_insert(self, room, message, argstr):
+		match = re.fullmatch(self.INS_RE, argstr)
+		if not match:
+			await room.send("ERROR: Invalid command syntax", message.mid)
+			return
+
+		mode = match.group(1)
+		before = int(match.group(2))
+		args = self.parse_args(match.group(3))
+
+		videos, lines_parse_error, lines_api_error = await self.find_videos(args)
+
+		if not videos:
+			text = "\n".join(lines_parse_error + lines_api_error)
+			await room.send("ERROR: No valid videos specified\n" + text, message.mid)
+			return
+
+		if mode == "after":
+			before += 1
+
+		lines = []
+		for video in videos:
+			position = self.playlist.insert(video, message.sender.nick, before=before)
+			before += 1
+			until = self.playlist.playtime_until(position)
+
+			info = Playlist.format_list_entry(video, position, until)
+			lines.extend(info)
+
+		text = "\n".join(lines + lines_parse_error + lines_api_error)
+		await room.send(text, message.mid)
+		self.playlist.play(room)
+
 
 def main(configfile):
 	#asyncio.get_event_loop().set_debug(True)
