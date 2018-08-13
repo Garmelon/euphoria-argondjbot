@@ -144,7 +144,7 @@ class Playlist:
 			return position
 		elif before >= 0:
 			self.waiting.insert(before, element)
-			return before
+			return min(before, len(self.waiting) - 1)
 		else:
 			return None
 
