@@ -14,7 +14,6 @@ from yaboli.utils import *
 
 
 class Video:
-	DURATION_RE = r"P(\d+Y)?(\d+"
 	DELAY = 4
 
 	def __init__(self, vid, title, duration, blocked, allowed):
@@ -462,8 +461,6 @@ class ArgonDJBot(yaboli.Bot):
 
 
 def main(configfile):
-	#asyncio.get_event_loop().set_debug(True)
-	#logging.basicConfig(level=logging.DEBUG)
 	logging.basicConfig(level=logging.INFO)
 
 	config = configparser.ConfigParser(allow_no_value=True)
