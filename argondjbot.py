@@ -47,6 +47,8 @@ class YouTube:
 		return videos
 
 class Playlist:
+	COMMON_COUNTRIES = {"DE", "FI", "GB", "IT", "JP", "NL", "US"}
+
 	def __init__(self):
 		self.waiting = []
 
@@ -73,10 +75,29 @@ class Playlist:
 		played_in = Playlist.format_duration(played_in)
 		lines = [f"[{position:2}] {video.title!r} will be played in [{played_in}]"]
 
+		blocked = None
 		if video.blocked is not None:
-			lines.append(f"Blocked in {', '.join(video.blocked)}.")
+			action = "Blocked"
+			blocked = set(video.blocked)
+			#lines.append(f"Blocked in {', '.join(video.blocked)}.")
 		if video.allowed is not None:
-			lines.append(f"Only viewable in {', '.join(video.allowed)}.")
+			action = "Only viewable"
+			blocked = set(video.allowed)
+			#lines.append(f"Only viewable in {', '.join(video.allowed)}.")
+		if blocked is not None:
+			common = sorted(blocked & Playlist.COMMON_COUNTRIES)
+			uncommon = sorted(blocked - Playlist.COMMON_COUNTRIES)
+
+			if common:
+				if uncommon:
+					text = f"{action} in {', '.join(common)} and {len(uncommon)} other countries."
+				else:
+					text = f"{action} in {', '.join(common)}."
+			elif len(uncommon) <= 10:
+				text = f"{action} in {', '.join(uncommon)}."
+			else:
+				text = f"{action} in {len(uncommon)} countries."
+			lines.append(text)
 
 		return lines
 
@@ -160,6 +181,15 @@ class Playlist:
 
 	def empty(self):
 		return not bool(self.waiting)
+
+	def len(self):
+		return len(self.waiting)
+
+	def get(self, i):
+		try:
+			return self.waiting[i]
+		except IndexError:
+			return None
 
 	def items(self):
 		return enumerate(self.waiting)
@@ -300,6 +330,8 @@ class ArgonDJBot(yaboli.Bot):
 
 			await self.command_list(room, message, command)
 
+		await self.command_detail(room, message, command, argstr)
+
 		await self.command_queue(room, message, command, argstr)
 		await self.command_delete(room, message, command, argstr)
 		await self.command_insert(room, message, command, argstr)
@@ -393,6 +425,49 @@ class ArgonDJBot(yaboli.Bot):
 		else:
 			text = "Queue is empty"
 
+		await room.send(text, message.mid)
+
+	@yaboli.command("detail", "info", "show")
+	async def command_detail(self, room, message, argstr):
+		indices = []
+		lines_parse_error = []
+		args = self.parse_args(argstr)
+		for arg in args:
+			match = re.match(r"\d+", arg)
+			if match:
+				indices.append(int(match.group(0)))
+			else:
+				lines_parse_error.append(f"Could not parse {arg!r}")
+
+		videos = []
+		lines_index_error = []
+		for i in sorted(set(indices)):
+			video = self.playlist.get(i)
+			if video:
+				videos.append(video)
+			else:
+				lines_index_error.append(f"No video at index {i}")
+
+		if not videos:
+			text = "\n".join(["ERROR: No valid indices given"] + lines_parse_error + lines_index_error)
+			await room.send(text, message.mid)
+			return
+
+		lines = []
+		for video, player in videos:
+			info = []
+			info.append(f"youtube.com/watch?v={video.id} {video.title!r}")
+			info.append(f"Queued by {mention(player, ping=False)}")
+
+			if video.blocked is not None:
+				info.append(f"Blocked in {', '.join(video.blocked)}.")
+			if video.allowed is not None:
+				info.append(f"Only viewable in {', '.join(video.allowed)}.")
+
+			lines.extend(info)
+			lines.append("")
+
+		text = "\n".join(lines + lines_parse_error + lines_index_error)
 		await room.send(text, message.mid)
 
 	@yaboli.command("delete", "del", "d")
