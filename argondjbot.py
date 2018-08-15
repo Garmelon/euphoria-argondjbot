@@ -220,6 +220,7 @@ class ArgonDJBot(yaboli.Bot):
 		"!skip, !s - skip the currently playing video\n"
 		"\n"
 		"Advanced queue manipulation:\n"
+		"!detail, !info, !show <indices> - show more details for videos in the queue\n"
 		"!list, !l - display a list of currently queued videos\n"
 		"!delete, !del, !d <index> - deletes video at that index in the queue\n"
 		"!insert, !ins, !i before|after <index> <urls or ids> - insert videos in the queue\n"
@@ -427,7 +428,7 @@ class ArgonDJBot(yaboli.Bot):
 
 		await room.send(text, message.mid)
 
-	@yaboli.command("detail", "info", "show")
+	@yaboli.command("detail", "details", "info", "show")
 	async def command_detail(self, room, message, argstr):
 		indices = []
 		lines_parse_error = []
