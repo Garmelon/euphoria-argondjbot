@@ -309,7 +309,7 @@ class ArgonDJBot(yaboli.Bot):
 		lines_parse_error = []
 		for arg in args:
 			if arg == "-id": continue
-			match = re.fullmatch(self.YOUTUBE_RE, arg)
+			match = re.match(self.YOUTUBE_RE, arg)
 			if match:
 				video_ids.append(match.group(self.YOUTUBE_RE_GROUP))
 			else:
