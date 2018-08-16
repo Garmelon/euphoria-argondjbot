@@ -47,7 +47,7 @@ class YouTube:
 		return videos
 
 class Playlist:
-	COMMON_COUNTRIES = {"DE", "FI", "GB", "IT", "JP", "NL", "US"}
+	COMMON_COUNTRIES = {"DE", "FI", "FR", "GB", "IT", "JP", "NL", "PT", "US"}
 
 	def __init__(self):
 		self.waiting = []
