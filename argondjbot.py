@@ -201,6 +201,9 @@ class Playlist:
 		except IndexError:
 			return None
 
+	def deleteall(self):
+		self.waiting = []
+
 	# playlist info
 
 	def empty(self):
@@ -244,10 +247,11 @@ class ArgonDJBot(yaboli.Bot):
 		"!skip, !s - skip the currently playing video\n"
 		"\n"
 		"Advanced queue manipulation:\n"
-		"!detail, !info, !show <indices> - show more details for videos in the queue\n"
 		"!list, !l - display a list of currently queued videos\n"
+		"!detail, !info, !show <indices> - show more details for videos in the queue\n"
 		"!delete, !del, !d <index> - deletes video at that index in the queue\n"
 		"!insert, !ins, !i before|after <index> <urls or ids> - insert videos in the queue\n"
+		"!deleteall, !dall, !da, !flush - remove the whole queue\n"
 		"\n"
 		"Fun stuff:\n"
 		"!dramaticskip, !dskip, !ds - dramatic version of !skip\n"
@@ -354,6 +358,7 @@ class ArgonDJBot(yaboli.Bot):
 			await self.command_dskip(room, message, command)
 
 			await self.command_list(room, message, command)
+			await self.command_deleteall(room, message, command)
 
 		await self.command_detail(room, message, command, argstr)
 
@@ -558,6 +563,11 @@ class ArgonDJBot(yaboli.Bot):
 		text = "\n".join(lines + lines_parse_error + lines_api_error)
 		await room.send(text, message.mid)
 		self.playlist.play(room)
+
+	@yaboli.command("deleteall", "dall", "da", "flush")
+	async def command_deleteall(self, room, message):
+		self.playlist.deleteall()
+		await room.send("Queue deleted", message.mid)
 
 
 def main(configfile):
