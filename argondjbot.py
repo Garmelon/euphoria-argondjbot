@@ -243,19 +243,19 @@ class Playlist:
 class ArgonDJBot(yaboli.Bot):
 	COMMANDS = (
 		"Simply playing videos:\n"
-		"!queue, !q <urls or ids> - add videos to the queue\n"
-		"!skip, !s - skip the currently playing video\n"
+		"!queue <urls or ids> - add videos to the queue (alias: !q)\n"
+		"!skip - skip the currently playing video (alias: !s)\n"
 		"\n"
 		"Advanced queue manipulation:\n"
-		"!list, !l - display a list of currently queued videos\n"
-		"!detail, !info, !show <indices> - show more details for videos in the queue\n"
-		"!delete, !del, !d <index> - deletes video at that index in the queue\n"
-		"!insert, !ins, !i before|after <index> <urls or ids> - insert videos in the queue\n"
-		"!deleteall, !dall, !da, !flush - remove the whole queue\n"
+		"!list - display a list of currently queued videos (alias: !l)\n"
+		"!detail <indices> - show more details for videos in the queue (aliases: !info, !show)\n"
+		"!delete <index> - deletes video at that index in the queue (aliases: !del, !d)\n"
+		"!insert before|after <index> <urls or ids> - insert videos in the queue (aliases: !ins, !i)\n"
+		"!deleteall - remove the whole queue (aliases: !dall, !d, !flush)\n"
 		"\n"
 		"Fun stuff:\n"
-		"!dramaticskip, !dskip, !ds - dramatic version of !skip\n"
-		"!videoskip, !vskip, !vs - play a short video before the next queued video starts\n"
+		"!dramaticskip - dramatic version of !skip (aliases: !dskip, !ds)\n"
+		"!videoskip - play a short video before the next queued video starts (aliases: !vskip, !vs)\n"
 	)
 
 	SHORT_HELP = "Keeps track of the video queue. !q <link> to queue a new video."
