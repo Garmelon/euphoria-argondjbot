@@ -230,7 +230,7 @@ class ArgonDJBot(yaboli.Bot):
 		"!videoskip, !vskip, !vs - play a short video before the next queued video starts\n"
 	)
 
-	SHORT_HELP = "Short help placeholder"
+	SHORT_HELP = "Keeps track of the video queue. !q <link> to queue a new video."
 	LONG_HELP = COMMANDS
 
 	# Find the video id in a single argument
