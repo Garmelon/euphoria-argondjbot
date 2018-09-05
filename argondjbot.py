@@ -272,7 +272,7 @@ class ArgonDJBot(yaboli.Bot):
 		"\tTo reference the currently playing video, use '!detail playing'.\n"
 		"!delete <index> - deletes video at that index in the queue (aliases: !del, !d)\n"
 		"!insert before|after <index> <urls or ids> - insert videos in the queue (aliases: !ins, !i)\n"
-		"!deleteall - remove the whole queue (aliases: !dall, !d, !flush)\n"
+		"!deleteall - remove the whole queue (aliases: !dall, !da, !flush)\n"
 		"\n"
 		"Fun stuff:\n"
 		"!dramaticskip - dramatic version of !skip (aliases: !dskip, !ds)\n"
