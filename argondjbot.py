@@ -178,13 +178,16 @@ class Playlist:
 			self.playing_video = video, player
 			self.playing_until = time.time() + duration
 
-			text = self.format_play(video, player)
-			msg = await room.send(text)
+			play_text = self.format_play(video, player)
+			#msg = await room.send(play_text)
 
 			next_video = self.next()
 			video, player = next_video if next_video else (None, None)
-			text = self.format_next(video, player)
-			await room.send(text, msg.mid)
+			next_text = self.format_next(video, player)
+			#await room.send(next_text, msg.mid)
+
+			text = f"{play_text}\n{next_text}"
+			await room.send(text)
 
 			await asyncio.sleep(duration)
 
