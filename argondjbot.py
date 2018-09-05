@@ -146,9 +146,19 @@ class Playlist:
 	# commands regarding currently playing video
 
 	def play(self, room):
-		if self.playing_task is None or self.playing_task.done():
+		"""
+		Start playing the first video in the queue unless something is already playing."
+
+		Returns True if it started playing the first video of the queue,
+		returns False otherwise (nothing happened).
+		"""
+
+		if self.waiting and (self.playing_task is None or self.playing_task.done()):
 			self.playing_task = asyncio.ensure_future(self._play(room))
 			#asyncio.ensure_future(self._play(room))
+			return True
+		else:
+			return False
 
 	def skip(self, room):
 		if self.playing_task and not self.playing_task.done():
@@ -157,6 +167,10 @@ class Playlist:
 		self.play(room)
 
 	async def _play(self, room):
+		"""
+		Plays videos from the queue until it is empty.
+		"""
+
 		while self.waiting:
 			video, player = self.waiting.pop(0)
 			duration = video.duration.total_seconds()
@@ -399,17 +413,28 @@ class ArgonDJBot(yaboli.Bot):
 			await room.send("ERROR: No valid videos specified\n" + text, message.mid)
 			return
 
-		lines = []
+		in_playlist = []
 		for video in videos:
 			position = self.playlist.insert(video, message.sender.nick)
 			until = self.playlist.playtime_until(position)
+			in_playlist.append((video, position, until))
 
+		lines = []
+
+		playing = self.playlist.play(room)
+		if playing:
+			video, _, until = in_playlist[0]
+			info = Playlist.format_list_entry(video, "playing", until)
+			lines.extend(info)
+
+			in_playlist = [(v, p-1, u) for v, p, u in in_playlist[1:]]
+
+		for video, position, until in in_playlist:
 			info = Playlist.format_list_entry(video, position, until)
 			lines.extend(info)
 
 		text = "\n".join(lines + lines_parse_error + lines_api_error)
 		await room.send(text, message.mid)
-		self.playlist.play(room)
 
 	@yaboli.command("skip", "s")
 	async def command_skip(self, room, message):
