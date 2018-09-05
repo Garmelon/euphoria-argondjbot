@@ -153,7 +153,7 @@ class Playlist:
 		returns False otherwise (nothing happened).
 		"""
 
-		if self.waiting and (self.playing_task is None or self.playing_task.done()):
+		if self.waiting and not self.playing():
 			self.playing_task = asyncio.ensure_future(self._play(room))
 			#asyncio.ensure_future(self._play(room))
 			return True
@@ -175,7 +175,7 @@ class Playlist:
 			video, player = self.waiting.pop(0)
 			duration = video.duration.total_seconds()
 
-			self.playing_video = video
+			self.playing_video = video, player
 			self.playing_until = time.time() + duration
 
 			text = self.format_play(video, player)
@@ -220,6 +220,9 @@ class Playlist:
 
 	# playlist info
 
+	def playing(self):
+		return self.playing_task is not None and not self.playing_task.done()
+
 	def empty(self):
 		return not bool(self.waiting)
 
@@ -227,6 +230,9 @@ class Playlist:
 		return len(self.waiting)
 
 	def get(self, i):
+		if i == -1 and self.playing():
+			return self.playing_video
+
 		try:
 			return self.waiting[i]
 		except IndexError:
@@ -263,6 +269,7 @@ class ArgonDJBot(yaboli.Bot):
 		"Advanced queue manipulation:\n"
 		"!list - display a list of currently queued videos (alias: !l)\n"
 		"!detail <indices> - show more details for videos in the queue (aliases: !info, !show)\n"
+		"\tTo reference the currently playing video, use '!detail playing'.\n"
 		"!delete <index> - deletes video at that index in the queue (aliases: !del, !d)\n"
 		"!insert before|after <index> <urls or ids> - insert videos in the queue (aliases: !ins, !i)\n"
 		"!deleteall - remove the whole queue (aliases: !dall, !d, !flush)\n"
@@ -491,6 +498,8 @@ class ArgonDJBot(yaboli.Bot):
 			match = re.match(r"\d+", arg)
 			if match:
 				indices.append(int(match.group(0)))
+			elif arg == "playing":
+				indices.append(-1)
 			else:
 				lines_parse_error.append(f"Could not parse {arg!r}")
 
@@ -499,7 +508,8 @@ class ArgonDJBot(yaboli.Bot):
 		for i in sorted(set(indices)):
 			video = self.playlist.get(i)
 			if video:
-				videos.append(video)
+				v, p = video
+				videos.append((i, v, p))
 			else:
 				lines_index_error.append(f"No video at index {i}")
 
@@ -509,9 +519,10 @@ class ArgonDJBot(yaboli.Bot):
 			return
 
 		lines = []
-		for video, player in videos:
+		for index, video, player in videos:
+			index = "playing" if index == -1 else index
 			info = []
-			info.append(f"youtube.com/watch?v={video.id} {video.title!r}")
+			info.append(f"[{index:2}] youtube.com/watch?v={video.id} {video.title!r}")
 			info.append(f"Queued by {mention(player, ping=False)}")
 
 			if video.blocked is not None:
