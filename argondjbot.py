@@ -93,9 +93,18 @@ class Playlist:
 		return f"{hours:02}:{minutes:02}:{seconds:02}"
 
 	@staticmethod
-	def format_list_entry(video, position, played_in):
-		played_in = Playlist.format_duration(played_in)
-		lines = [f"[{position:2}] {video.title!r} will be played in [{played_in}]"]
+	def format_list_entry(video, position=None, played_in=None):
+		if position is None:
+			position = "playing"
+
+		info = f"[{position:2}] {video.title!r}"
+
+		if played_in is not None:
+			played_in = Playlist.format_duration(played_in)
+			info = f"{info} will be played in [{played_in}]"
+
+		#lines = [f"[{position:2}] {video.title!r} will be played in [{played_in}]"]
+		lines = [info]
 
 		blocked = None
 		if video.blocked is not None:
@@ -433,8 +442,8 @@ class ArgonDJBot(yaboli.Bot):
 
 		playing = self.playlist.play(room)
 		if playing:
-			video, _, until = in_playlist[0]
-			info = Playlist.format_list_entry(video, "playing", until)
+			video, _, _ = in_playlist[0]
+			info = Playlist.format_list_entry(video)
 			lines.extend(info)
 
 			in_playlist = [(v, p-1, u) for v, p, u in in_playlist[1:]]
@@ -480,6 +489,12 @@ class ArgonDJBot(yaboli.Bot):
 	@yaboli.command("list", "l")
 	async def command_list(self, room, message):
 		lines = []
+
+		if self.playlist.playing():
+			(video, _) = self.playlist.playing_video
+			info = Playlist.format_list_entry(video)
+			lines.extend(info)
+
 		for position, (video, _) in self.playlist.items():
 			until = self.playlist.playtime_until(position)
 			info = Playlist.format_list_entry(video, position, until)
