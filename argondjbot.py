@@ -287,8 +287,8 @@ class ArgonDJBot(yaboli.Bot):
 
 	# Find the video id in a single argument
 	VIDEO_ID_RE = r"[a-zA-Z0-9_-]{11}"
-	YOUTUBE_RE = r"((https?://)?(www\.|music\.)?(youtube\.com/(watch\?v=|embed/)|youtu\.be/))?(" + VIDEO_ID_RE + ")"
-	YOUTUBE_RE_GROUP = 6
+	YOUTUBE_RE = r"((https?://)?(www\.|music\.)?(youtube\.com/(watch\?(\S*&)v=|embed/)|youtu\.be/))?(" + VIDEO_ID_RE + ")"
+	YOUTUBE_RE_GROUP = 7
 
 	DEL_RE = r"(\d+)" # Per argument
 	INS_RE = r"(before|after)\s+(\d+)\s+(.*)" # On the whole argstr
