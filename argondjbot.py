@@ -327,7 +327,7 @@ class ArgonDJBot(yaboli.Bot):
 		"9sxgbpTeiWQ", # Hedgehog
 		"uqyHPs9D0z0", # Cat meaaaaaaaaaaaaaaaaaow
 		"ua4nDQ-IGbY", # Cat vs. printing paper
-		#"rMMOQOLze4Y", # Polite rally driver
+		"rMMOQOLze4Y", # Polite rally driver
 		"UBftA7V4xak", # Dog dancing to "Shake that ass for me"
 		"F-X4SLhorvw", # Look at all those
 		"qcdkbcjTBoE", # Seal yells
@@ -341,20 +341,22 @@ class ArgonDJBot(yaboli.Bot):
 		"UkakfkiydPw", # Bem bebebem bebem bebem bem bem
 		"t1r6BmNJX6Y", # Dog treat scream
 		"sMKoNBRZM1M", # Super mario ping pong
-		"DSi_FzQBNrU", # Markiplier do something spooky
+		#"DSi_FzQBNrU", # Markiplier do something spooky
 		"KkDI4l2EldI", # SNAIL
 		"NCu2saTv3QA", # Cat plays with foot
 		"XOCuBpXi4zI", # Walking frog
 		"Ul7IE3CTmSs", # annoyed news presenter
 		"VV5JOQyUYNg", # Drum fill
 		"PsLm6_qHeag", # Best dog in the world
-		#"_7jvYfIDbyU", # Not a rapper, an adapter
+		"_7jvYfIDbyU", # Not a rapper, an adapter
 		"Vh8l0x9uF-Y", # Man sneezes into trombone
 		"rkZ9sSgGPrs", # Ghostly mouse howl
 		"Fl2pSbNvp_Q", # One hell of a yawn
 		"LlFmBB8wzg0", # It's soup
 		"ne-gcy--MeY", # Crow on webcam
 		"1s04tEDJVjY", # Smooth criminal cat
+                "P4JDgK6ib6Q", # Pigeon in river
+                "vJqiq0Feqng", # Charles Cornell quack
 	]
 	DRAMATICSKIP_VIDEOS = [
 		"VHkP88fx164", # animated video
