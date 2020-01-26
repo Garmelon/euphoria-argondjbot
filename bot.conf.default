@@ -1,0 +1,9 @@
+[general]
+nick = ArgonDJBot
+cookie_file = argondjbot.cookie
+
+[rooms]
+test
+
+[argon]
+api_key = <your youtube api key here>

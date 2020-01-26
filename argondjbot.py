@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import asyncio
 import configparser
 import datetime
@@ -10,7 +11,7 @@ import time
 from apiclient.discovery import build
 
 import yaboli
-from yaboli.utils import *
+from yaboli.util import *
 
 
 class Video:
@@ -273,26 +274,24 @@ class Playlist:
 		return self.playtime_left() + video_sum
 
 class ArgonDJBot(yaboli.Bot):
-	COMMANDS = (
-		"Simply playing videos:\n"
-		"!queue <urls or ids> - add videos to the queue (alias: !q)\n"
-		"!skip - skip the currently playing video (alias: !s)\n"
-		"\n"
-		"Advanced queue manipulation:\n"
-		"!list - display a list of currently queued videos (alias: !l)\n"
-		"!detail <indices> - show more details for videos in the queue (aliases: !info, !show)\n"
-		"\tTo reference the currently playing video, use '!detail playing'.\n"
-		"!delete <index> - deletes video at that index in the queue (aliases: !del, !d)\n"
-		"!insert before|after <index> <urls or ids> - insert videos in the queue (aliases: !ins, !i)\n"
-		"!deleteall - remove the whole queue (aliases: !dall, !da, !flush)\n"
-		"\n"
-		"Fun stuff:\n"
-		"!dramaticskip - dramatic version of !skip (aliases: !dskip, !ds)\n"
-		"!videoskip - play a short video before the next queued video starts (aliases: !vskip, !vs)\n"
-	)
-
-	SHORT_HELP = "Keeps track of the video queue. !q <link> to queue a new video."
-	LONG_HELP = COMMANDS
+	HELP_GENERAL = ["Keeps track of the video queue. !q <link> to queue a new video."]
+	HELP_SPECIFIC = [
+		"Simply playing videos:",
+		"!queue <urls or ids> - add videos to the queue (alias: !q)",
+		"!skip - skip the currently playing video (alias: !s)",
+		"",
+		"Advanced queue manipulation:",
+		"!list - display a list of currently queued videos (alias: !l)",
+		"!detail <indices> - show more details for videos in the queue (aliases: !info, !show)",
+		"\tTo reference the currently playing video, use '!detail playing'.",
+		"!delete <index> - deletes video at that index in the queue (aliases: !del, !d)",
+		"!insert before|after <index> <urls or ids> - insert videos in the queue (aliases: !ins, !i)",
+		"!deleteall - remove the whole queue (aliases: !dall, !da, !flush)",
+		"",
+		"Fun stuff:",
+		"!dramaticskip - dramatic version of !skip (aliases: !dskip, !ds)",
+		"!videoskip - play a short video before the next queued video starts (aliases: !vskip, !vs)",
+	]
 
 	# Find the video id in a single argument
 	VIDEO_ID_RE = r"[a-zA-Z0-9_-]{11}"
@@ -367,39 +366,47 @@ class ArgonDJBot(yaboli.Bot):
 		"Wt0GiBkyCC0", # dramatic cat
 	] + ["y8Kyi0WNg40"]*100 # original video
 
-	def __init__(self, nick, room, api_key, cookiefile=None, password=None):
-		super().__init__(nick, cookiefile=cookiefile)
+	def __init__(self, *args, **kwargs):
+		super().__init__(*args, **kwargs)
 
-		self.yt = YouTube(api_key)
+		self.register_botrulez(kill=True, restart=True)
+
+		self.register_general("queue", self.command_queue)
+		self.register_general("q", self.command_queue)
+
+		self.register_general("skip", self.command_skip, args=False)
+		self.register_general("s", self.command_skip, args=False)
+
+		self.register_general("list", self.command_list, args=False)
+		self.register_general("l", self.command_list, args=False)
+
+		self.register_general("detail", self.command_detail)
+		self.register_general("info", self.command_detail)
+		self.register_general("show", self.command_detail)
+
+		self.register_general("delete", self.command_delete)
+		self.register_general("del", self.command_delete)
+		self.register_general("d", self.command_delete)
+
+		self.register_general("insert", self.command_insert)
+		self.register_general("ins", self.command_insert)
+		self.register_general("i", self.command_insert)
+
+		self.register_general("deleteall", self.command_deleteall, args=False)
+		self.register_general("dall", self.command_deleteall, args=False)
+		self.register_general("da", self.command_deleteall, args=False)
+		self.register_general("flush", self.command_deleteall, args=False)
+
+		self.register_general("dramaticskip", self.command_dskip, args=False)
+		self.register_general("dskip", self.command_dskip, args=False)
+		self.register_general("ds", self.command_dskip, args=False)
+
+		self.register_general("videoskip", self.command_vskip, args=False)
+		self.register_general("vskip", self.command_vskip, args=False)
+		self.register_general("vs", self.command_vskip, args=False)
+
+		self.yt = YouTube(self.config.get("argon", "api_key"))
 		self.playlist = Playlist()
-
-		self.join_room(room, password=password)
-
-	async def on_command_specific(self, room, message, command, nick, argstr):
-		if similar(nick, room.session.nick) and not argstr:
-			await self.botrulez_ping(room, message, command)
-			await self.botrulez_help(room, message, command, text=self.LONG_HELP)
-			await self.botrulez_uptime(room, message, command)
-			await self.botrulez_kill(room, message, command)
-			await self.botrulez_restart(room, message, command)
-
-	async def on_command_general(self, room, message, command, argstr):
-		if not argstr:
-			await self.botrulez_ping(room, message, command)
-			await self.botrulez_help(room, message, command, text=self.SHORT_HELP)
-
-			await self.command_skip(room, message, command)
-			await self.command_vskip(room, message, command)
-			await self.command_dskip(room, message, command)
-
-			await self.command_list(room, message, command)
-			await self.command_deleteall(room, message, command)
-
-		await self.command_detail(room, message, command, argstr)
-
-		await self.command_queue(room, message, command, argstr)
-		await self.command_delete(room, message, command, argstr)
-		await self.command_insert(room, message, command, argstr)
 
 	async def find_videos(self, args):
 		video_ids = []
@@ -424,19 +431,17 @@ class ArgonDJBot(yaboli.Bot):
 
 		return videos, lines_parse_error, lines_api_error
 
-	@yaboli.command("queue", "q")
-	async def command_queue(self, room, message, argstr):
-		args = self.parse_args(argstr)
-		videos, lines_parse_error, lines_api_error = await self.find_videos(args)
+	async def command_queue(self, room, msg, args):
+		videos, lines_parse_error, lines_api_error = await self.find_videos(args.basic())
 
 		if not videos:
 			text = "\n".join(lines_parse_error + lines_api_error)
-			await room.send("ERROR: No valid videos specified\n" + text, message.mid)
+			await msg.reply("ERROR: No valid videos specified\n" + text)
 			return
 
 		in_playlist = []
 		for video in videos:
-			position = self.playlist.insert(video, message.sender.nick)
+			position = self.playlist.insert(video, msg.sender.nick)
 			until = self.playlist.playtime_until(position)
 			in_playlist.append((video, position, until))
 
@@ -455,41 +460,37 @@ class ArgonDJBot(yaboli.Bot):
 			lines.extend(info)
 
 		text = "\n".join(lines + lines_parse_error + lines_api_error)
-		await room.send(text, message.mid)
+		await msg.reply(text)
 
-	@yaboli.command("skip", "s")
-	async def command_skip(self, room, message):
+	async def command_skip(self, room, msg, args):
 		if self.playlist.empty():
 			vid = random.choice(self.SKIP_VIDEOS)
 			videos = await self.yt.get_videos([vid])
 			video = videos.get(vid)
 			self.playlist.insert(video, room.session.nick, before=0)
 
-		await room.send("Skipping to next video", message.mid)
+		await msg.reply("Skipping to next video")
 		self.playlist.skip(room)
 
-	@yaboli.command("videoskip", "vskip", "vs")
-	async def command_vskip(self, room, message):
+	async def command_vskip(self, room, msg, args):
 		vid = random.choice(self.SKIP_VIDEOS)
 		videos = await self.yt.get_videos([vid])
 		video = videos.get(vid)
 		self.playlist.insert(video, room.session.nick, before=0)
 
-		await room.send("Skipping to next video", message.mid)
+		await msg.reply("Skipping to next video")
 		self.playlist.skip(room)
 
-	@yaboli.command("dramaticskip", "dskip", "ds")
-	async def command_dskip(self, room, message):
+	async def command_dskip(self, room, msg, args):
 		vid = random.choice(self.DRAMATICSKIP_VIDEOS)
 		videos = await self.yt.get_videos([vid])
 		video = videos.get(vid)
 		self.playlist.insert(video, room.session.nick, before=0)
 
-		await room.send("Skipping to next video", message.mid)
+		await msg.reply("Skipping to next video")
 		self.playlist.skip(room)
 
-	@yaboli.command("list", "l")
-	async def command_list(self, room, message):
+	async def command_list(self, room, msg, args):
 		lines = []
 
 		if self.playlist.playing():
@@ -507,14 +508,12 @@ class ArgonDJBot(yaboli.Bot):
 		else:
 			text = "Queue is empty"
 
-		await room.send(text, message.mid)
+		await msg.reply(text)
 
-	@yaboli.command("detail", "details", "info", "show")
-	async def command_detail(self, room, message, argstr):
+	async def command_detail(self, room, msg, args):
 		indices = []
 		lines_parse_error = []
-		args = self.parse_args(argstr)
-		for arg in args:
+		for arg in args.basic():
 			match = re.match(r"\d+", arg)
 			if match:
 				indices.append(int(match.group(0)))
@@ -535,7 +534,7 @@ class ArgonDJBot(yaboli.Bot):
 
 		if not videos:
 			text = "\n".join(["ERROR: No valid indices given"] + lines_parse_error + lines_index_error)
-			await room.send(text, message.mid)
+			await msg.reply(text)
 			return
 
 		lines = []
@@ -554,14 +553,12 @@ class ArgonDJBot(yaboli.Bot):
 			lines.append("")
 
 		text = "\n".join(lines + lines_parse_error + lines_index_error)
-		await room.send(text, message.mid)
+		await msg.reply(text)
 
-	@yaboli.command("delete", "del", "d")
-	async def command_delete(self, room, message, argstr):
+	async def command_delete(self, room, msg, args):
 		indices = []
 		lines_parse_error = []
-		args = self.parse_args(argstr)
-		for arg in args:
+		for arg in args.basic():
 			match = re.fullmatch(self.DEL_RE, arg)
 			if match:
 				indices.append(int(match.group(1)))
@@ -570,7 +567,7 @@ class ArgonDJBot(yaboli.Bot):
 
 		if not indices:
 			text = "\n".join(["ERROR: No valid indices given"] + lines_parse_error)
-			await room.send(text, message.mid)
+			await msg.reply(text)
 			return
 
 		lines = []
@@ -584,13 +581,12 @@ class ArgonDJBot(yaboli.Bot):
 				lines_remove_error.append(f"No video at index {i}")
 
 		text = "\n".join(lines + lines_parse_error + lines_remove_error)
-		await room.send(text, message.mid)
+		await msg.reply(text)
 
-	@yaboli.command("insert", "ins", "i")
-	async def command_insert(self, room, message, argstr):
-		match = re.fullmatch(self.INS_RE, argstr)
+	async def command_insert(self, room, msg, args):
+		match = re.fullmatch(self.INS_RE, args.raw)
 		if not match:
-			await room.send("ERROR: Invalid command syntax", message.mid)
+			await msg.reply("ERROR: Invalid command syntax")
 			return
 
 		mode = match.group(1)
@@ -601,7 +597,7 @@ class ArgonDJBot(yaboli.Bot):
 
 		if not videos:
 			text = "\n".join(lines_parse_error + lines_api_error)
-			await room.send("ERROR: No valid videos specified\n" + text, message.mid)
+			await msg.reply("ERROR: No valid videos specified\n" + text)
 			return
 
 		if mode == "after":
@@ -609,7 +605,7 @@ class ArgonDJBot(yaboli.Bot):
 
 		lines = []
 		for video in videos:
-			position = self.playlist.insert(video, message.sender.nick, before=before)
+			position = self.playlist.insert(video, msg.sender.nick, before=before)
 			before += 1
 			until = self.playlist.playtime_until(position)
 
@@ -617,31 +613,17 @@ class ArgonDJBot(yaboli.Bot):
 			lines.extend(info)
 
 		text = "\n".join(lines + lines_parse_error + lines_api_error)
-		await room.send(text, message.mid)
+		await msg.reply(text)
 		self.playlist.play(room)
 
-	@yaboli.command("deleteall", "dall", "da", "flush")
-	async def command_deleteall(self, room, message):
+	async def command_deleteall(self, room, msg, args):
 		self.playlist.deleteall()
-		await room.send("Queue deleted", message.mid)
+		await msg.reply("Queue deleted")
 
 
-def main(configfile):
-	logging.basicConfig(level=logging.INFO)
-
-	config = configparser.ConfigParser(allow_no_value=True)
-	config.read(configfile)
-
-	nick = config.get("general", "nick")
-	cookiefile = config.get("general", "cookiefile", fallback=None)
-	api_key = config.get("general", "apikey", fallback=None)
-	room = config.get("general", "room")
-	password = config.get("general", "password", fallback=None)
-
-	bot = ArgonDJBot(nick, room, api_key, cookiefile=cookiefile, password=password)
-
-	asyncio.get_event_loop().run_forever()
+def main():
+	yaboli.run(ArgonDJBot)
 
 if __name__ == "__main__":
-	main("argondjbot.conf")
+	main()
 
