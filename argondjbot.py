@@ -1,17 +1,14 @@
 #!/usr/bin/env python3
 import asyncio
-import configparser
 import datetime
-import isodate
-import logging
 import random
 import re
 import time
 
-from apiclient.discovery import build
-
+import isodate
 import yaboli
-from yaboli.util import *
+from apiclient.discovery import build
+from yaboli.util import asyncify, mention
 
 
 class Video:
@@ -24,6 +21,7 @@ class Video:
 		self.duration = self.raw_duration + datetime.timedelta(seconds=self.DELAY)
 		self.blocked = list(sorted(blocked)) if blocked is not None else None
 		self.allowed = list(sorted(allowed)) if allowed is not None else None
+
 
 class YouTube:
 	def __init__(self, api_key):
@@ -46,6 +44,7 @@ class YouTube:
 			videos[vid] = video
 
 		return videos
+
 
 class Playlist:
 	COUNTRIES = { # according to en.wikipedia.org/wiki/ISO_3166-1_alpha-2, 2018-08-17 18:12:15 UTC
@@ -273,6 +272,7 @@ class Playlist:
 		video_sum = sum((video.duration for video, _ in videos), datetime.timedelta())
 		return self.playtime_left() + video_sum
 
+
 class ArgonDJBot(yaboli.Bot):
 	HELP_GENERAL = ["Keeps track of the video queue. !q <link> to queue a new video."]
 	HELP_SPECIFIC = [
@@ -354,8 +354,8 @@ class ArgonDJBot(yaboli.Bot):
 		"LlFmBB8wzg0", # It's soup
 		"ne-gcy--MeY", # Crow on webcam
 		"1s04tEDJVjY", # Smooth criminal cat
-                "P4JDgK6ib6Q", # Pigeon in river
-                "vJqiq0Feqng", # Charles Cornell quack
+		"P4JDgK6ib6Q", # Pigeon in river
+		"vJqiq0Feqng", # Charles Cornell quack
 	]
 	DRAMATICSKIP_VIDEOS = [
 		"VHkP88fx164", # animated video
@@ -626,4 +626,3 @@ def main():
 
 if __name__ == "__main__":
 	main()
-
