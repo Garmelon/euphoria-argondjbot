@@ -274,7 +274,7 @@ class Playlist:
 
 
 class ArgonDJBot(yaboli.Bot):
-	HELP_GENERAL = ["Keeps track of the video queue. !q <link> to queue a new video."]
+	HELP_GENERAL = "Keeps track of the video queue. !q <link> to queue a new video."
 	HELP_SPECIFIC = [
 		"Simply playing videos:",
 		"!queue <urls or ids> - add videos to the queue (alias: !q)",
