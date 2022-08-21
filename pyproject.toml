@@ -8,7 +8,7 @@ version = "1.0.0"
 dependencies = [
 	"yaboli @ git+https://github.com/Garmelon/yaboli.git@v1.2.0",
 	"isodate >=0.6.1, <0.7.0",
-	"google-api-python-client ==1.7.11",
+	"google-api-python-client >=2.57.0, <3.0.0",
 ]
 
 [project.scripts]
