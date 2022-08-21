@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "argondjbot"
+version = "1.0.0"
+dependencies = [
+	"yaboli @ git+https://github.com/Garmelon/yaboli.git@v1.2.0",
+	"isodate >=0.6.1, <0.7.0",
+	"google-api-python-client ==1.7.11",
+]
+
+[project.scripts]
+argondjbot = "argondjbot:main"
